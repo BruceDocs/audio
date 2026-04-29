@@ -1,4 +1,5 @@
 using System;
+using System.IO;
 using NAudio.Wave;
 using NAudio.Wave.SampleProviders;
 
@@ -6,9 +7,10 @@ class Program
 {
     static void Main()
     {
-        using var capture = new WasapiLoopbackCapture();
+        var stdout = Console.OpenStandardOutput();
+        Console.SetOut(TextWriter.Null); // prevent accidental text writes to stdout
 
-        var targetFormat = new WaveFormat(16000, 16, 1);
+        using var capture = new WasapiLoopbackCapture();
         var buffered = new BufferedWaveProvider(capture.WaveFormat)
         {
             DiscardOnBufferOverflow = true
@@ -23,11 +25,11 @@ class Program
 
         var sampleProvider = buffered.ToSampleProvider();
         var resampler = new WdlResamplingSampleProvider(sampleProvider, 16000);
-
         var floatBuffer = new float[1024];
         var byteBuffer = new byte[1024 * 2];
 
         Console.Error.WriteLine("Recording system audio to stdout...");
+
         while (true)
         {
             int read = resampler.Read(floatBuffer, 0, floatBuffer.Length);
@@ -41,9 +43,8 @@ class Program
                     byteBuffer[bytes++] = (byte)(s16 & 0xff);
                     byteBuffer[bytes++] = (byte)((s16 >> 8) & 0xff);
                 }
-
-                Console.OpenStandardOutput().Write(byteBuffer, 0, bytes);
-                Console.OpenStandardOutput().Flush();
+                stdout.Write(byteBuffer, 0, bytes);
+                stdout.Flush();
             }
             else
             {
