@@ -8,9 +8,17 @@ class Program
     static void Main()
     {
         var stdout = Console.OpenStandardOutput();
-        Console.SetOut(TextWriter.Null); // prevent accidental text writes to stdout
+        Console.SetOut(TextWriter.Null);
 
         using var capture = new WasapiLoopbackCapture();
+
+        // Print actual capture format to stderr
+        Console.Error.WriteLine($"Capture format: {capture.WaveFormat}");
+        Console.Error.WriteLine($"Sample Rate: {capture.WaveFormat.SampleRate}");
+        Console.Error.WriteLine($"Channels: {capture.WaveFormat.Channels}");
+        Console.Error.WriteLine($"Bits per sample: {capture.WaveFormat.BitsPerSample}");
+        Console.Error.WriteLine($"Encoding: {capture.WaveFormat.Encoding}");
+
         var buffered = new BufferedWaveProvider(capture.WaveFormat)
         {
             DiscardOnBufferOverflow = true
